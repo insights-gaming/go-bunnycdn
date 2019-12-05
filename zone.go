@@ -106,3 +106,40 @@ func (z *StorageZone) Delete(ctx context.Context, path, fileName string) error {
 
 	return z.catch(res)
 }
+
+type File struct {
+	Guid            string
+	StorageZoneName string
+	Path            string
+	ObjectName      string
+	Length          int64
+	LastChanged     string
+	IsDirectory     bool
+	ServerId        int64
+	UserId          string
+	DateCreated     string
+	StorageZoneId   int64
+}
+
+func (z *StorageZone) ListDir(ctx context.Context, path string) ([]*File, error) {
+	req, err := http.NewRequest(http.MethodGet, z.url(path, ""), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := z.c.hc.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != 200 {
+		return nil, z.catch(res)
+	}
+
+	var files []*File
+	if err := json.NewDecoder(res.Body).Decode(&files); err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
